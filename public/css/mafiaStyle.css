@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css?family=Exo:500,700');
+
+* {
+    box-sizing: border-box;
+}
+html {
+    overflow: hidden;
+}
+body { 
+    font: 12pt Exo, Helvetica; 
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+ul {
+    list-style-type: none;
+}
+form { height: 100px; background: #000; padding: 3px; width: 100%; font-size:16pt; position: absolute; bottom: 0; left: 0 }
+form input { border: 0; padding: 10px; width: 80%; margin-right: .5%; }
+form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+.list { list-style-type: none; margin: 0; padding: 0;}
+
+.grid-wrapper {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    grid-template-rows: 1fr 40vh;
+    height: calc(100% - 100px);
+}
+.msgwrapper {
+    position: absolute;
+    left: 0;
+    bottom: 100px;
+}
+#messages {
+    width:100%;
+}
+#messages li { padding: 5px 10px; color: #444; }
+
+#message-container {
+    min-height:40vh;
+    max-height: 40vh;
+    overflow: auto;
+    user-select: none;
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 1;
+    grid-column-end: 4;
+}
+#messages li:nth-child(odd) { background: #eee; }
+
+
+#player-list {
+    width:100%;
+}
+
+#player-list li {
+    overflow:hidden;
+	white-space:nowrap;
+	text-overflow:ellipsis; min-width: 0
+}
+.player-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 50vh;
+    background-color: #13141daf;
+    transition: width ease-out 0.4s;
+    width: 0%;
+    overflow: hidden;
+}
+.overlay-open { width: 80vw }
+#ovl-buttons {
+    background-color: #13141daf;
+    position:absolute;
+    text-overflow: ellipsis;
+    top: 0;
+    left: 0;
+}
+#overlay-button-ply {
+    background-image: url(/images/players.png);
+    background-size: cover;
+    cursor: pointer;
+    margin-top: 1%;
+    width: 40px;
+    height: 40px;
+    margin: 5px;
+    
+}
+.player-overlay-interior {
+    padding-left: 5px;
+    padding-top: 5px;
+    /*padding: 20px;*/
+    /*overflow: hidden;*/
+    /*margin-left: 50px;*/
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.game-popup {
+    position: absolute;
+    top: 10%;
+    left: 20%;
+    right: 20%;
+    background-color: #0e3a0600;
+    opacity: 0;
+    transition: all 0.5s ease-out;
+    transform: scale(0.8,0.8);
+    padding: 1.5%;
+    font-size: 16pt;
+    color: #ffffff;
+}
+.game-popup-open {
+    box-shadow: 0px 0px 11px 0px #00000055;
+    transform: scale(1,1);
+    background-color: #0e3a06e1;
+    opacity: 1;
+}
+
+.popup-content {
+    display:flex;
+    justify-content: center;
+    font-weight: 700;
+    text-shadow: 1px 1px #00000055;
+}
+
+.role-card-wrapper {
+    display:flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 3;
+    grid-column-end: 4;
+    margin-bottom: 5vh;
+    z-index: 2;
+    
+}
+.role-card {
+    padding: 2%;
+    border: 1.5px #222;
+    border-radius: 5px;
+    width: 100%;
+    height: 100%;
+    border-style: solid;
+    font-size: 12pt;
+    display:flex;
+    flex-direction: column;
+    justify-content: space-around;
+    overflow: auto;
+    max-width: 400px;
+    background-color: #1728476e;
+}
+.role-title {
+    font-size: 20pt;
+}
+.role-alignment {
+    margin-top: 0px;
+}
+.role-abilities {
+    margin-top: 0px;
+}
+.role-attributes {
+    margin-top: 0px;
+}
+.role-goal {
+    margin-top: 0px;
+}
+
+#player-list li {
+    padding: 0px 10px;
+    padding-top: 0.4vh;
+    font-size: 1.7vh;
+}
+
+
+input, select, textarea {
+    font-size: 55px;
+}
+
+.color-small {
+    font-weight: bold;
+}
+
+@media only screen and (min-width: 768px) {
+    /* For desktop: */
+    
+}

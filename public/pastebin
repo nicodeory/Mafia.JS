@@ -1,0 +1,11 @@
+<div class="player-overlay">
+        <div class="player-overlay-interior">
+            <div class="row">
+                <ul class="list" id="player-list"></ul>
+            </div>
+        </div>
+    </div>
+    <div id="ovl-buttons">
+        <div id="overlay-button-ply"></div>
+        <div id="overlay-button-ply"></div>
+    </div>
