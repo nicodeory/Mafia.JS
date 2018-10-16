@@ -36,7 +36,7 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
 #messages {
     width:100%;
 }
-#messages li { padding: 5px 11px; color: #444; }
+#messages li { padding: 5px 10px; color: #444; }
 
 #message-container {
     min-height:40vh;
