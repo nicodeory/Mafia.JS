@@ -59,7 +59,7 @@ $(function () {
         role.attributes.forEach((ab) => {
             $("#role-attributes ul").append("<li>- "+ab+"</li>")
         })
-        $("#role-goal").text(role.goal);
+        $("#role-goal").text("Goal: " + role.goal);
     });
 
     socket.on('recoverMessageLog', function (log) {

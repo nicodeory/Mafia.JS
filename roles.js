@@ -131,15 +131,7 @@ Roles.MafiaRole = class extends Roles.Role {
         this.attributes = ["You can talk with the Mafia at night."]
     }
 };
-
-Roles.Mafioso = class extends Roles.MafiaRole {
-    constructor() {
-        super();
-        this.name = '<c-s val="CC0000">Mafioso</c-s>';
-        this.category = Roles.Category.Killing;
-        this.nightAction = Roles.NightAction.MafKill;
-    }
-};
+// KILLING
 Roles.Godfather = class extends Roles.MafiaRole {
     constructor() {
         super();
@@ -151,6 +143,25 @@ Roles.Godfather = class extends Roles.MafiaRole {
     }
 };
 
+Roles.Mafioso = class extends Roles.MafiaRole {
+    constructor() {
+        super();
+        this.name = '<c-s val="CC0000">Mafioso</c-s>';
+        this.category = Roles.Category.Killing;
+        this.nightAction = Roles.NightAction.MafKill;
+    }
+};
+// SUPPORT
+Roles.Blackmailer = class extends Roles.MafiaRole {
+    constructor() {
+        super();
+        this.name = '<c-s val="DD0000">Blackmailer</c-s>'
+        this.category = Roles.Category.Support;
+        this.nightAction = Roles.NightAction.Visit;
+    }
+}
+
+
 /* TRIAD ROLES */
 Roles.TriadRole = class extends Roles.Role {
     constructor() {
@@ -161,6 +172,24 @@ Roles.TriadRole = class extends Roles.Role {
         this.attributes = ["You can talk with the Triad at night."]
     }
 };
+Roles.DragonHead = class extends Roles.TriadRole {
+    constructor() {
+        super();
+        this.name = '<c-s val="9F8EFF">Dragon Head</c-s>';
+        this.category = Roles.Category.Killing;
+        this.detectionImmune = true;
+        this.killImmune = true;
+        this.nightAction = Roles.NightAction.MafKill;
+    }
+};
+Roles.Enforcer = class extends Roles.TriadRole {
+    constructor() {
+        super();
+        this.name = '<c-s val="2851CC">Enforcer</c-s>';
+        this.category = Roles.Category.Killing;
+        this.nightAction = Roles.NightAction.MafKill;
+    }
+};
 /* NEUTRAL ROLES */
 
 
@@ -168,6 +197,7 @@ Roles.TriadRole = class extends Roles.Role {
 Roles.RoleFactory = {
     "Godfather": Roles.Godfather,
     "Mafioso": Roles.Mafioso,
+    "Blackmailer": Roles.Blackmailer,
     "Citizen": Roles.Citizen,
     "Doctor": Roles.Doctor,
     "Sheriff": Roles.Sheriff,

@@ -24,6 +24,7 @@ Strings.no_last_will = "{0} doesn't seem to have a last will.";
 Strings.cause_mafia = "He was riddled with bullets at close range.";
 Strings.cause_suicide = "He apparently killed himself.";
 
+Strings.error_silenced = c("FF0000","You are silenced.");
 Strings.vote_allowed = "Today's public vote and trial will begin now.";
 Strings.lynch_start = "{0} has been voted to trial.";
 Strings.lynch_defense = "{0}, you are on trial for conspiracy against the town. What is your defense?";
@@ -44,6 +45,10 @@ Strings.visit_target = "You decide you are going to visit {0}.";
 Strings.vigi_wait_one = c("FF0000","You can't find your gun! You need a day to search your home.");
 Strings.mafia_suggest = "{0} suggests to kill {1}.";
 Strings.crier_chat = c("66CC33","Crier:") + "{0}";
+Strings.became_mafioso = "Being the last of the Mafia, you decided to act as a full " + c("CC0000","Mafioso")+"."; // TODO: probably not the original string
+Strings.became_enforcer = "Being the last of the Triad, you decided to act as a full " + c("2851CC","Enforcer")+".";
+Strings.vest_on = "You put on your bulletproof vest.";
+Strings.vest_off = "You take off your bulletproof vest.";
 
     // NIGHT SEQUENCE
 Strings.night_immune = c("FFFF00","Your target survived your attack! Tonight, he has immunity to conventional attacks.");
@@ -56,6 +61,8 @@ Strings.afk_kill = "You hear a single shot ring out in the night...";
 Strings.afk_killed = "You have committed suicide. Don't be AFK during a game!";
 Strings.doctor_attacked = "Your target was attacked tonight!";
 Strings.doctor_saved = "You were attacked and left for dead, but a stranger nursed you back to health!";
+
+
     // POST NIGHT SEQUENCE
 Strings.sheriff_not_suspicious = "Your target is not suspicious.";
 Strings.sheriff_mafia = "Your target is a member of the Mafia!";
@@ -64,6 +71,7 @@ Strings.detective_no_visit = "Your target did not do anything tonight.";
 Strings.detective_visit = "Your target visited {0} tonight.";
 Strings.lookout_not_visited = "Your target was not visited by anyone tonight.";
 Strings.lookout_visited = "{0} visited your target tonight.";
+Strings.you_were_silenced = c("AA3333","A shady man approached you and threatened to reveal your horrible secret.  You are silenced!");
 
 /* FACTIONS */
 Strings.town = c("00FF00","Town");
@@ -73,6 +81,7 @@ Strings.neutral = c("AAAAAA", "Neutral");
 /* GOALS */
 Strings.town_goal = "Lynch every criminal and evildoer."
 Strings.mafia_goal = "Kill off the Town and everyone else who would oppose you."
+
 /* MISCELLANEOUS */
 Strings.player_quit = "{0} has quit on life.";
 Strings.win_condition_reached = "The game has reached a conclusion...";

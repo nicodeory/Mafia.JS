@@ -100,7 +100,8 @@ class RolePlayer {
         this.role = role;
         this.alive = true;
         this.deathCause = "";
-        this.detained = false;
+        this.silenced = false;
+        this.jailed = false;
         this.willBeExecuted = false;
         this.afkMarked = false;
         this.nightImmune = false;
@@ -181,20 +182,7 @@ class Game {
                 this.state.players.push(ply);
                 server.PopupToPlayer(i, Strings.you_are.format(randName, ply.role.name));
                 // TODO: Separate this in time
-                var faction;
-                if(ply.role instanceof Roles.TownRole) faction = Strings.town;
-                if(ply.role instanceof Roles.MafiaRole) faction = Strings.mafia;
-                if(ply.role instanceof Roles.TriadRole) faction = Strings.triad;
-                if(ply.role.faction == Roles.Faction.Neutral) faction = Strings.neutral;
-                
-                var roleInfo = 
-                {
-                    name: ply.role.name,
-                    faction: faction,
-                    abilities: ply.role.abilities,
-                    attributes: ply.role.attributes,
-                    goal: ply.goal
-                }
+                var roleInfo = this.GetRoleInfo(ply.role);
                 server.SendRoleInfo(i, roleInfo);
             }
             server.OnGameStarted();
@@ -206,6 +194,24 @@ class Game {
             server.Broadcast(Strings.starting);
             this.gameStarted = true;
         }
+    }
+
+    GetRoleInfo(role) {
+        var faction;
+        if(role instanceof Roles.TownRole) faction = Strings.town;
+        if(role instanceof Roles.MafiaRole) faction = Strings.mafia;
+        if(role instanceof Roles.TriadRole) faction = Strings.triad;
+        if(role.faction == Roles.Faction.Neutral) faction = Strings.neutral;
+        
+        var roleInfo = 
+        {
+            name: role.name,
+            faction: faction,
+            abilities: role.abilities,
+            attributes: role.attributes,
+            goal: role.goal
+        }
+        return roleInfo;
     }
 
     GetSimplifiedPlayerList() {
@@ -287,7 +293,7 @@ class Game {
                     " doesn't seem to have a last will." : 
                     "'s Last Will reads: " + this.state.trialPlayer.LastWill));
                     this.SendPlayerUpdate();
-                    this.CheckForWinCondition();
+                    this.CheckForWinCondition(true);
                     console.log(JSON.stringify(this.state.players)); // TODO: Dead people can still be voted up. WHY
                     this.nextState = "day-end";
                 } else {
@@ -309,6 +315,7 @@ class Game {
                 this.nextState = "night-start";
                 break;
             case "night-start":
+                this.OnNewNight();
                 server.Broadcast('<c-s val="00CCFF">NIGHT ' + this.state.dayNumber + "</c-s>"); // TODO: Jailor detain
                 this.nextState = "night-discussion";
                 this.timeLeft = 3;
@@ -388,31 +395,36 @@ class Game {
 
     /** Returns true if the player is able to visit his selected target. */
     PlayerCanVisit(origin, i) {
+        var originP = this.state.players[origin];
+        var targetP = this.state.players[i];
         if (!this.state.NightDiscussionEnabled ||
-            i < 0 || i >= this.state.players.length || !this.state.players[origin].alive || !this.state.players[i].alive) {
+            i < 0 || i >= this.state.players.length || !originP.alive || !targetP.alive) { // targetP.alive WATCH OUT CORONER
             console.log("can't visit; Invalid vote or invalid time")
             return false;
         }
 
         //check if person can visit
-        if (this.state.players[origin].role.nightAction != Roles.NightAction.None) {
-            if (this.state.players[origin].role.nightAction == Roles.NightAction.MafKill) {
+        if (originP.role.nightAction != Roles.NightAction.None) {
+            if (originP.role.nightAction == Roles.NightAction.MafKill) {
                 console.log("Cant visit, mafioso" + origin);
                 //this.IssueVote(this.state.Votes_Mafia, origin, i);
                 return false; // just use the voting system.
             }
             // SELF VISIT CHECK
-            if (origin == i && !this.state.players[origin].role.canSelfVisit) {console.log("Cant self-visit" + origin);return false;}
+            if (origin == i && !originP.role.canSelfVisit) {console.log("Cant self-visit" + origin);return false;}
             //Check if person correctly self visited
-            if (this.state.players[origin].role.nightAction == Roles.NightAction.OnlySelfVisit) {
+            if (originP.role.nightAction == Roles.NightAction.OnlySelfVisit) {
                 if (origin != i) {console.log("Cant visit anyone other than self"+origin);return false;}
             }
         } else {console.log("Cant visit, no night action"+origin);return false;}
 
-        if (this.state.players[origin].role instanceof Roles.Vigilante && this.state.dayNumber == 1) {
+        if (originP.role instanceof Roles.Vigilante && this.state.dayNumber == 1) {
             server.SayOnlyToPlayer(origin, "<c-s val=FF0000>You can't find your gun! You need a day to search your home.</c-s>");
             return false;
         }
+        if ((originP.role instanceof Roles.MafiaRole && targetP.role instanceof Roles.MafiaRole) ||
+        (originP.role instanceof Roles.TriadRole && targetP.role instanceof Roles.TriadRole)) {console.log("Cant visit other mafias"); return false; }
+       
         return true;
     }
     /** Returns the Godfather's kill vote (index). Null if they haven't voted anyone. */
@@ -473,13 +485,15 @@ class Game {
                     this.IssueVote(Roles.Faction.Mafia, vote.from, vote.to); // wait...
             }
         } else {
+            console.log("Person literally can't vote")
             return false;
         }
     }
     
     /** Returns true if the vote is valid, within bounds and voted player is alive. */
     IsVoteValid(vote) {
-        return vote.to > 0 && vote.to < 16 && vote.from != vote.to && this.state.players[vote.to].alive;
+        console.log(vote);
+        return vote.to >= 0 && vote.to < 15 && vote.from != vote.to && this.state.players[vote.to].alive;
     }
     /** Returns true if player can vote */
     CanVote(id) {
@@ -491,6 +505,7 @@ class Game {
 
     /** Registers a vote in the corresponding vote pool. toPlayer must be 0/1 if it's a lynch vote.  */
     IssueVote(voteFaction, fromPlayer, toPlayer) { // TODO: Adapt to different faction votes
+        console.log("casting vote");
         var voteArray;
         var foundVote;
         var votedPlayer;
@@ -561,10 +576,12 @@ class Game {
         }        
     }
 
-    /* All applicable people become immune for the night */
+    /** */
+
+    /** All applicable people become immune for the night */
     UseVests() { // TODO: Assign vests
         this.state.players.filter((x) => x.role instanceof Roles.Citizen).forEach(player => {
-            if(player.selectedTarget1 != -1) {
+            if(player.selectedTarget != -1) { // TODO: Notify player
                 player.role.vestsLeft--;
                 player.nightImmune = true;
             } // check if player has enough vests
@@ -682,6 +699,8 @@ class Game {
             p.visited = p.selectedVisit; // TODO: here is where we swap if bd / witch
             const targetP = this.state.players[p.visited];
             targetP.visitedBy.push(i);
+            // blackmail here
+            if(targetP.silenced) server.SayOnlyToPlayer(p.visited, Strings.you_were_silenced);
         }
 
         for(let i = 0; i < this.state.players.length;i++){
@@ -708,6 +727,7 @@ class Game {
                 } 
             }
         }
+        
     }
     PreKillVisits() { // TODO: Do swaps here for early night roles such as killing roles, rblockers etc
         var targetP;
@@ -720,7 +740,39 @@ class Game {
                // targetP = this.state.players[p.visited];
                 //server.SayOnlyToPlayer(i, "You went to protect " + targetP.name + ".");
             }
+            if(p.role instanceof Roles.Blackmailer) {
+                p.visited = p.selectedVisit;
+                targetP = this.state.players[p.visited];
+                targetP.silenced = true;
+            }
         }
+    }
+
+    /** Executes a bunch of actions at the start of every night. */
+    OnNewNight() {
+        // -- UNSILENCES EVERYONE --
+        this.state.players.forEach((p) => p.silenced = false);
+        // -- CHECKS IF MAFIA / TRIAD DONT HAVE KILLING ROLES
+        if(this.state.players.find((p) => p.alive && (p.role instanceof Roles.Mafioso || p.role instanceof Roles.Godfather)) === undefined) {
+            // if no mafia killing roles left, pick a random mafia member to become mafioso.
+            var mafPlayers = this.state.players.filter((p) => p.role instanceof Roles.MafiaRole);
+            if(mafPlayers.length > 0) {
+                var randIndex = Math.floor(Math.random()*mafPlayers.length);
+                server.SayOnlyToPlayer(this.state.players.indexOf(mafPlayers[randIndex]),Strings.became_mafioso);
+                this.ChangeRole(mafPlayers[randIndex], new Roles.Mafioso());
+            }
+        }
+        if(this.state.players.find((p) => p.alive && (p.role instanceof Roles.Enforcer || p.role instanceof Roles.DragonHead)) === undefined) {
+            // if no triad killing roles left, pick a random triad member to become enforcer.
+            var mafPlayers = this.state.players.filter((p) => p.role instanceof Roles.TriadRole);
+            if(mafPlayers.length > 0) {
+                var randIndex = Math.floor(Math.random()*mafPlayers.length);
+                server.SayOnlyToPlayer(this.state.players.indexOf(mafPlayers[randIndex]),Strings.became_enforcer);
+                this.ChangeRole(mafPlayers[randIndex], new Roles.Enforcer());
+            }
+        }
+        // ---
+
     }
 
     /** Starts the night sequence.*/
@@ -789,7 +841,7 @@ class Game {
     }
 
     /** Checks if the game has reached a conclusion. */
-    CheckForWinCondition() 
+    CheckForWinCondition(onlyTown = false) 
     {
         var alivePlayers = this.GetAlivePlayers();
         var conclusion = null;
@@ -799,15 +851,16 @@ class Game {
         } else if (alivePlayers.filter((x) => x.role instanceof Roles.TownRole).length == 0) {
             conclusion = "maf"; // TODO: Triad/Maf tiebreaker + neutrals
         } else if (alivePlayers.length == 2) { /* ONE VS ONE TIEBREAKERS */
-                var firstPlr;
-                var secondPlr;
-                //maf-town
-                if (alivePlayers.find((x) => x.role instanceof Roles.MafiaRole) != null) { // take the one mafia // TODO: Make sure != null works
-                    secondPlr = alivePlayers.find((x) => x.role instanceof Roles.TownRole);
-                    conclusion = secondPlr.role instanceof Roles.Citizen ? "town":"maf"; // Citizen wins tiebreakers TODO: Optional
-                }
+            var firstPlr;
+            var secondPlr;
+            //maf-town
+            if (alivePlayers.find((x) => x.role instanceof Roles.MafiaRole) != null) { // take the one mafia // TODO: Make sure != null works
+                secondPlr = alivePlayers.find((x) => x.role instanceof Roles.TownRole);
+                conclusion = secondPlr.role instanceof Roles.Citizen ? "town" : "maf"; // Citizen wins tiebreakers TODO: Optional
             }
+        }
 
+        if(onlyTown && conclusion != "town") return; // i.e in lynch vote only town wins (to allow for plot twists during the night)
 
 
         // CONCLUSION MESSAGES
@@ -840,7 +893,8 @@ class Game {
                 }
                 
             } else { // This point should be reached only if it's day discussion or if a trialed player speaks during defense.
-                server.PlayerSay(ply.name, msg);
+                if (ply.silenced) server.SayOnlyToPlayer(playerIdx, Strings.error_silenced);
+                else server.PlayerSay(ply.name, msg);
             }
         }
     }
@@ -857,6 +911,14 @@ class Game {
     SetLastWill(i, msg) {
         this.state.players[i].LastWill = msg;
     }
+    /** Changes a player's role to the role specified */
+    ChangeRole(ply, role) {
+        ply.role = role;
+        var index = this.state.players.indexOf(ply);
+        var roleInfo = this.GetRoleInfo(ply.role);
+        server.SendRoleInfo(index, roleInfo);
+    }
+
     /** Returns the indices of the members of a specific faction. */
     GetPlayerIndicesFromFaction(faction) {
         var pList = this.GetAlivePlayers().filter((x)=> x.role.faction == faction);

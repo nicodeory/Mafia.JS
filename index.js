@@ -157,7 +157,7 @@ var ServerClass = class {
         io.sockets.emit("msg", msg);
     }
 
-    PlayerSay(name, msg){
+    PlayerSay(name, msg){ // TODO: Prevent spam
         var str = name + "> " + msg;
         console.log(str);
         this.MessageLog.push(str);
