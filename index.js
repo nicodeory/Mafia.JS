@@ -151,7 +151,7 @@ var ServerClass = class {
         this.popupsHidden = false;
     }
     Broadcast(msg, channel) {
-        console.log("BROADCAST- " + msg);
+        console.log(msg);
         this.MessageLog.push(msg); // TODO: Also save personal messages for every individual person
         io.sockets.emit("msg", msg);
     }
