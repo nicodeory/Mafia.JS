@@ -9,7 +9,7 @@ Roles.Category = Object.freeze({"Zero":1, "Government":2, "Investigative":4, "Pr
 "Power":16, "Deception":32, "Support":64, "Benign": 128, "Evil": 256, "Killing": 512});
 Roles.NightAction = Object.freeze({"None":0, "Visit":1, "OnlySelfVisit":2, "Vote":3, "Swap":4, "SoloKill":5, "MafKill":6}); // TODO: Vests? Arsonist ignite? Jailor exe?
 
-// TODO: Convert role names to c("000","str") format
+// TODO: Convert role names to c("000","str") format and move to strings/en.js
 Roles.Role = class {
     constructor() {
         this.name = "Invalid";
@@ -19,6 +19,8 @@ Roles.Role = class {
         this.detectionImmune = false;
         this.killImmune = false;
         this.canSelfVisit = false;
+        this.abilities = [Strings.none];
+        this.attributes = [Strings.none];
     }
 };
 
@@ -29,6 +31,7 @@ Roles.TownRole = class extends Roles.Role {
         super();
         this.faction = Roles.Faction.Town;
         this.category = Roles.Category.Zero;
+        this.goal = Strings.town_goal
     }
 };
 
@@ -124,6 +127,8 @@ Roles.MafiaRole = class extends Roles.Role {
         super();
         this.faction = Roles.Faction.Mafia;
         this.category = Roles.Category.Zero;
+        this.goal = Strings.mafia_goal
+        this.attributes = ["You can talk with the Mafia at night."]
     }
 };
 
@@ -152,6 +157,8 @@ Roles.TriadRole = class extends Roles.Role {
         super();
         this.faction = Roles.Faction.Triad;
         this.category = Roles.Category.Zero;
+        this.goal = Strings.mafia_goal;
+        this.attributes = ["You can talk with the Triad at night."]
     }
 };
 /* NEUTRAL ROLES */

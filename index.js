@@ -150,6 +150,7 @@ var ServerClass = class {
         this.MessageLog = [];
         this.popupsHidden = false;
     }
+
     Broadcast(msg, channel) {
         console.log(msg);
         this.MessageLog.push(msg); // TODO: Also save personal messages for every individual person
@@ -173,6 +174,11 @@ var ServerClass = class {
             if(replaceName) io.to(`${connections[pI]}`).emit("msg", this.ReplName_Replace(pI,msg));
             else io.to(`${connections[pI]}`).emit("msg", msg);
         });
+    }
+
+    /** Sends role info to a player */
+    SendRoleInfo(i, roleInfo) {
+        io.to(`${connections[i]}`).emit("roleinfo", roleInfo);
     }
 
     UpdatePlayerList(players) {

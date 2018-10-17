@@ -154,19 +154,19 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
     max-width: 400px;
     background-color: #1728476e;
 }
-.role-title {
+#role-title {
     font-size: 20pt;
 }
-.role-alignment {
+#role-alignment {
     margin-top: 0px;
 }
-.role-abilities {
+#role-abilities {
     margin-top: 0px;
 }
-.role-attributes {
+#role-attributes {
     margin-top: 0px;
 }
-.role-goal {
+#role-goal {
     margin-top: 0px;
 }
 

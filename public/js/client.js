@@ -47,6 +47,21 @@ $(function () {
             $("#player-list").append('<li>' + (i + 1) + '. '+/*<span style="color:' + colors[i] + '">' +  "<b> "  + */(p.alive ? p.name : "") /*+ "</b></span>"*/);
         }
     });
+
+    socket.on('roleinfo', function(role) {
+        $("#role-title").html(role.name);
+        $("#role-alignment").html("Alignment: " + role.faction);
+        $("#role-abilities ul").empty();
+        role.abilities.forEach((ab) => {
+            $("#role-abilities ul").append("<li>- "+ab+"</li>")
+        })
+        $("#role-attributes ul").empty();
+        role.attributes.forEach((ab) => {
+            $("#role-attributes ul").append("<li>- "+ab+"</li>")
+        })
+        $("#role-goal").text(role.goal);
+    });
+
     socket.on('recoverMessageLog', function (log) {
         $("#messages").empty();
         log.forEach((m) => { LogMessage(m); });

@@ -65,8 +65,17 @@ Strings.detective_visit = "Your target visited {0} tonight.";
 Strings.lookout_not_visited = "Your target was not visited by anyone tonight.";
 Strings.lookout_visited = "{0} visited your target tonight.";
 
+/* FACTIONS */
+Strings.town = c("00FF00","Town");
+Strings.mafia = c("FF0000","Mafia");
+Strings.triad = c("3366FF","Triad");
+Strings.neutral = c("AAAAAA", "Neutral");
+/* GOALS */
+Strings.town_goal = "Lynch every criminal and evildoer."
+Strings.mafia_goal = "Kill off the Town and everyone else who would oppose you."
 /* MISCELLANEOUS */
 Strings.player_quit = "{0} has quit on life.";
 Strings.win_condition_reached = "The game has reached a conclusion...";
+Strings.none = "None";
 
 module.exports = Strings;

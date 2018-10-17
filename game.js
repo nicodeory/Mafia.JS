@@ -180,6 +180,22 @@ class Game {
                 var ply = new RolePlayer(randName, this.setup.PullRoleFromPool());
                 this.state.players.push(ply);
                 server.PopupToPlayer(i, Strings.you_are.format(randName, ply.role.name));
+                // TODO: Separate this in time
+                var faction;
+                if(ply.role instanceof Roles.TownRole) faction = Strings.town;
+                if(ply.role instanceof Roles.MafiaRole) faction = Strings.mafia;
+                if(ply.role instanceof Roles.TriadRole) faction = Strings.triad;
+                if(ply.role.faction == Roles.Faction.Neutral) faction = Strings.neutral;
+                
+                var roleInfo = 
+                {
+                    name: ply.role.name,
+                    faction: faction,
+                    abilities: ply.role.abilities,
+                    attributes: ply.role.attributes,
+                    goal: ply.goal
+                }
+                server.SendRoleInfo(i, roleInfo);
             }
             server.OnGameStarted();
             
