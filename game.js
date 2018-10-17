@@ -357,13 +357,13 @@ class Game {
 
     /** Tries to select the specified player to visit during the night. */
     TrySelectTarget(origin, i) {
-        console.log(this.state.players); // TODO: Crashes sometimes
+        //console.log(this.state.players); // TODO: Crashes sometimes
         
         if(!this.PlayerCanVisit(origin, i)) return false;
 
         this.state.players[origin].selectedVisit = i;
         if(origin==i) {
-            server.SayOnlyToPlayer(origin, "You decide you are going to visit yourself."); // TODO: String depending on role e.g vests
+            server.SayOnlyToPlayer(origin, "You decide you are going to visit yourself."); // TODO: Strings depending on role e.g vests
         } else { server.SayOnlyToPlayer(origin, "You decide you are going to visit " + this.state.players[i].name + ".");}
         
         console.log("player " + origin + " selected " + i + " for visiting");
@@ -854,7 +854,8 @@ class Game {
 
 var DeathCauses = Object.freeze({
 "maf":"He was riddled with bullets at close range.",
-"suicide-afk":"He apparently killed himself."
+"suicide-afk":"He apparently killed himself.",
+"vigi": "He was shot by a high-caliber gun."
 });
 
 
