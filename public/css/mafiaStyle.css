@@ -100,6 +100,23 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
     grid-column-end: 2;
 }
 
+.role-icon-container {
+    position: absolute;
+    top: 0;
+    max-width: 20vw;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#role-icon-list > img {
+    height: 22px;
+    object-fit: contain;
+    margin-left: 2px;
+    image-rendering: pixelated;
+}
+
 .game-popup {
     position: absolute;
     top: 10%;
