@@ -105,6 +105,7 @@ class RolePlayer {
         this.willBeExecuted = false;
         this.afkMarked = false;
         this.nightImmune = false;
+        this.roleBlocked = false;
         this.selectedVisit = -1;
         this.visited = -1;
         this.visitedBy = [];
@@ -201,7 +202,7 @@ class Game {
         if(role instanceof Roles.TownRole) faction = Strings.town;
         if(role instanceof Roles.MafiaRole) faction = Strings.mafia;
         if(role instanceof Roles.TriadRole) faction = Strings.triad;
-        if(role.faction == Roles.Faction.Neutral) faction = Strings.neutral;
+        if(role.faction == Roles.Faction.Neutral) faction = Strings.none;
         
         var roleInfo = 
         {
@@ -521,7 +522,7 @@ class Game {
                     if(this.state.stage == "night-discussion" && this.state.players[fromPlayer].role instanceof Roles.MafiaRole && 
                     this.state.players[toPlayer].role instanceof Roles.MafiaRole) return; // can't vote for own mafs during the night 
                     voteArray = this.state.Votes_Mafia;     // TODO: If mafioso dies, godfather can't vote!
-                    server.Broadcast(this.state.players[fromPlayer].name + " suggests to kill " + this.state.players[toPlayer].name); // TODO: Say to Maf
+                    server.Broadcast(this.state.players[fromPlayer].name + " suggests to kill " + this.state.players[toPlayer].name); // TODO: Say to Maf only
                     break;
                 default:
                     console.log("Invalid faction.");
@@ -594,7 +595,7 @@ class Game {
         /* --- VIGILANTE --- */
         var vigis = this.state.players.filter((x) => x.role instanceof Roles.Vigilante);
         vigis.forEach((v) => {
-            if (v.selectedVisit != -1) {
+            if (v.selectedVisit != -1 && !v.roleBlocked) {
                 v.visited = v.selectedVisit;
                 if (this.state.players[v.visited].role.nightImmune || this.state.players[v.visited].nightImmune)
                     server.SayOnlyToPlayer(this.state.players.indexOf(v), "Your target survived your attack! Tonight, he has immunity to conventional attacks.");
@@ -617,19 +618,21 @@ class Game {
             if (mafiosi.length > 0) {
                 mafRandIdx = Math.floor(Math.random() * mafiosi.length);
                 randMafioso = mafiosi[mafRandIdx];
-            } else { // TODO: Make automatically turn to mafioso (other roles) so it doesnt break
+            } else {
                 randMafioso = godfatherPlr;
             }
             if (randMafioso !== undefined) {
-                randMafioso.visited = playerToKill;
-                server.SayOnlyToMultiplePlayers(this.GetPlayerIndicesFromFaction(Roles.Faction.Mafia),
-                    randMafioso.name + " went to kill " + this.state.players[playerToKill].name + ".");
-                if (randMafioso.alive) { // see if mafioso was killed first
-                    if (this.state.players[playerToKill].nightImmune)
-                        server.SayOnlyToPlayer(mafRandIdx, "Your target survived your attack! Tonight, he has immunity to conventional attacks.");
-                    else this.ProcessKill(playerToKill, "maf", randMafioso.DeathNote); // TODO: Implement death note
-                }
-            } else {console.log("Couldn't find a mafia role to execute the kill tonight!");}
+                if (!randMafioso.roleBlocked) {
+                    randMafioso.visited = playerToKill;
+                    server.SayOnlyToMultiplePlayers(this.GetPlayerIndicesFromFaction(Roles.Faction.Mafia),
+                        randMafioso.name + " went to kill " + this.state.players[playerToKill].name + ".");
+                    if (randMafioso.alive) { // see if mafioso was killed first
+                        if (this.state.players[playerToKill].nightImmune)
+                            server.SayOnlyToPlayer(mafRandIdx, "Your target survived your attack! Tonight, he has immunity to conventional attacks.");
+                        else this.ProcessKill(playerToKill, "maf", randMafioso.DeathNote); // TODO: Implement death note
+                    }
+                } else {console.log("The mafioso is roleblocked and is unable to kill tonight!");}
+            } else { console.log("Couldn't find a mafia role to execute the kill tonight!"); }
         } else {
             console.log("The mafia decide not to kill anybody tonight.");
         }
@@ -695,7 +698,7 @@ class Game {
     LateVisits() {
         for(let i = 0; i < this.state.players.length;i++) { // First iteration to register every visit so investigative roles work fine
             const p = this.state.players[i]; // from player
-            if(p.selectedVisit == -1) continue;
+            if(p.selectedVisit == -1 || p.roleBlocked) continue;
             p.visited = p.selectedVisit; // TODO: here is where we swap if bd / witch
             const targetP = this.state.players[p.visited];
             targetP.visitedBy.push(i);
@@ -705,7 +708,7 @@ class Game {
 
         for(let i = 0; i < this.state.players.length;i++){
             const fromPlr = this.state.players[i]; // from player
-            if(fromPlr.visited == -1) continue;
+            if(fromPlr.visited == -1 || fromPlayer.roleBlocked) continue;
             if(!fromPlr.alive) continue;
 
             const targetP = this.state.players[fromPlr.visited]; // to player
@@ -727,14 +730,29 @@ class Game {
                 } 
             }
         }
-        
     }
-    PreKillVisits() { // TODO: Do swaps here for early night roles such as killing roles, rblockers etc
+
+    /** Takes care of bus driver, witch and roleblocker actions */
+    SwitchesAndRoleblocks() {  // TODO: Do swaps here for early night roles such as killing roles, rblockers etc
+        var targetP;
+        for (let i = 0; i < this.state.players.length; i++) {
+            const p = this.state.players[i];
+            if(p.selectedVisit == -1 || p.roleBlocked) continue; // TODO: Paradoxes & stuff
+            if (p.role instanceof Roles.Escort /* || consort*/) {
+                p.visited = p.selectedVisit;
+                targetP = this.state.players[p.visited];
+                targetP.roleBlocked = true;
+                server.SayOnlyToPlayer(p.visited, Strings.role_blocked); // TODO: If sk, kill roleblockers! Arso-> douse
+            }
+        }
+    }
+
+    PreKillVisits() {
         var targetP;
         for(let i = 0; i < this.state.players.length;i++){
             const p = this.state.players[i];
-            if(p.selectedVisit == -1) continue;
-            
+            if(p.selectedVisit == -1 || p.roleBlocked) continue;
+
             if(p.role instanceof Roles.Doctor) { // INVESTIGATIVE ROLES
                 p.visited = p.selectedVisit; // TODO: here is where we swap if bd / witch just for doctors tho
                // targetP = this.state.players[p.visited];
@@ -745,13 +763,17 @@ class Game {
                 targetP = this.state.players[p.visited];
                 targetP.silenced = true;
             }
+            
         }
     }
 
     /** Executes a bunch of actions at the start of every night. */
     OnNewNight() {
-        // -- UNSILENCES EVERYONE --
-        this.state.players.forEach((p) => p.silenced = false);
+        // -- UNSILENCES / UNROLEBLOCKS EVERYONE --
+        this.state.players.forEach((p) => {
+            p.silenced = false;
+            p.roleBlocked = false;
+        });
         // -- CHECKS IF MAFIA / TRIAD DONT HAVE KILLING ROLES
         if(this.state.players.find((p) => p.alive && (p.role instanceof Roles.Mafioso || p.role instanceof Roles.Godfather)) === undefined) {
             // if no mafia killing roles left, pick a random mafia member to become mafioso.
@@ -779,6 +801,7 @@ class Game {
     NightSequence() {
         console.log("Night sequence begun. Night ending...");
         this.UseVests();
+        this.SwitchesAndRoleblocks();
         this.PreKillVisits();
         this.ExecuteKills();
         this.LateVisits(); // separate late visit for doctor, so sendkillmessages() can go before late visits

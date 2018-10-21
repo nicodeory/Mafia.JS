@@ -71,6 +71,15 @@ Roles.Vigilante = class extends Roles.TownRole {
     }
 };
 
+Roles.Escort = class extends Roles.TownRole {
+    constructor() {
+        super();
+        this.name = '<c-s val="00FF00">Escort</c-s>';
+        this.category = Roles.Category.Protective;
+        this.nightAction = Roles.NightAction.Visit;
+    }
+};
+
 Roles.Sheriff = class extends Roles.TownRole {
     constructor() {
         super();
@@ -204,7 +213,8 @@ Roles.RoleFactory = {
     "Detective": Roles.Detective,
     "Lookout": Roles.Lookout,
     "Crier": Roles.Crier,
-    "Vigilante": Roles.Vigilante
+    "Vigilante": Roles.Vigilante,
+    "Escort" : Roles.Escort
 };
 
 module.exports = Roles;

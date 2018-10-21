@@ -51,6 +51,7 @@ Strings.vest_on = "You put on your bulletproof vest.";
 Strings.vest_off = "You take off your bulletproof vest.";
 
     // NIGHT SEQUENCE
+Strings.role_blocked = c("FF88FF","An attractive person approached you and then occupied your night.  You were role-blocked!");
 Strings.night_immune = c("FFFF00","Your target survived your attack! Tonight, he has immunity to conventional attacks.");
 Strings.mafia_kill = "You hear shots ring through the streets...";
 Strings.mafia_killed = "You were hit by the Mafia.";
