@@ -48,6 +48,13 @@ $(function () {
         }
     });
 
+    socket.on('possibleroles', function(roles) {
+        $("#role-icon-list").empty();
+        roles.forEach(function (r) {
+            $("#role-icon-list").append('<img src="images/roles/' + r + '.png"/>');
+        });
+    });
+
     socket.on('roleinfo', function(role) {
         $("#role-title").html(role.name);
         $("#role-alignment").html("Alignment: " + role.faction);

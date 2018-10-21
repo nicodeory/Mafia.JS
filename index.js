@@ -88,6 +88,7 @@ io.on('connection', function(socket) {
 
     socket.emit("updatePlayers", GameInstance.GetSimplifiedPlayerList());
     socket.emit("recoverMessageLog", ServerInstance.MessageLog);
+    socket.emit("possibleroles", ServerInstance.setupRoles);
 });
 
 
@@ -134,7 +135,7 @@ function ParseCommand(msg, idx) {
         GameInstance.SetLastWill(idx, cmdArg);
     } else if (msg.indexOf("-addrole") == 0) { // Adds a role to the setup
         cmdArg = msg.substr(9, msg.length - 9);
-        GameInstance.setup.AddRole(cmdArg);
+        GameInstance.setup.AddRole(cmdArg.split(","));
     } else if (msg.indexOf("-removerole") == 0) { // Removes a role from the setup (by index)
         cmdArg = msg.substr(12, msg.length - 12);
         GameInstance.setup.RemoveRole(cmdArg);
@@ -149,6 +150,7 @@ var ServerClass = class {
     constructor() {
         this.MessageLog = [];
         this.popupsHidden = false;
+        this.setupRoles = [];
     }
 
     Broadcast(msg, channel) {
@@ -207,10 +209,13 @@ var ServerClass = class {
         return str;
     }
 
-    /** Sends a password prompt to the specified player. */
-    /*SendPasswordPrompt(idx) {
-        io.to(`${connections[idx]}`).emit("setpassword");
-    }*/
+    
+    /** Sends a list of the possible roles in this setup. */
+    SendPossibleRoles(roles) {
+        console.log(roles);
+        this.setupRoles = roles;
+        io.sockets.emit("possibleroles", roles);
+    }
 
     /** Notifies players with a password they can set to reconnect */
     OnGameStarted() {

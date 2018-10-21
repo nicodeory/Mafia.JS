@@ -34,18 +34,21 @@ class GameSetup {
     }
 
     /** Adds a role to the setup. Takes a string. */
-    AddRole(role) {
-        var roleStr = role.charAt(0).toUpperCase() + role.substr(1);
-        var roleInstance;
-        var RoleClass = Roles.RoleFactory[roleStr];
-        var rlInstance;
-        console.log(roleStr);
-        console.log(RoleClass);
-        if(typeof RoleClass === "function") {
-          rlInstance = new RoleClass();
-          this.setupList.push(rlInstance);
-          console.log(this.setupList);
-        }
+    AddRole(roles) {
+        roles.forEach((role) => {
+            var roleStr = role.charAt(0).toUpperCase() + role.substr(1);
+            var roleInstance;
+            var RoleClass = Roles.RoleFactory[roleStr];
+            var rlInstance;
+            console.log(roleStr);
+            console.log(RoleClass);
+            if(typeof RoleClass === "function") {
+              rlInstance = new RoleClass();
+              this.setupList.push(rlInstance);
+              console.log(this.setupList);
+            }
+        });
+        
     }
     RemoveRole(index) {
         this.setupList.splice(index,1);
@@ -72,6 +75,16 @@ class GameSetup {
         this.setupList.forEach(e => {
             this.playerRolePool.push(e);
         });
+    }
+
+    /** Returns a list of possible roles of this setup */
+    GetPossibleRoles() {
+        var sortedList = Array.from(new Set(this.setupList.map((x) => x.name_id))).sort((x,y) => {
+            if(Roles.OrderedRoleNames.indexOf(x) < Roles.OrderedRoleNames.indexOf(y)) {
+                return -1;
+            } else {return 1;}
+        })
+        return sortedList; // TODO: Random roles (Town government, etc);
     }
 }
 
@@ -186,6 +199,9 @@ class Game {
                 var roleInfo = this.GetRoleInfo(ply.role);
                 server.SendRoleInfo(i, roleInfo);
             }
+
+            server.SendPossibleRoles(this.setup.GetPossibleRoles());
+            
             server.OnGameStarted();
             
             this.SendPlayerUpdate();
@@ -325,7 +341,7 @@ class Game {
                 this.state.NightDiscussionEnabled = true;
                 server.Broadcast("Mafia, Triad, Jailor and Neutral factions may start discussing.");
                 this.nextState = "night-sequence";
-                this.timeLeft = 15;
+                this.timeLeft = 20;
                 break;
             case "night-sequence":
                 this.state.NightDiscussionEnabled = false;
@@ -432,10 +448,11 @@ class Game {
     GetGodfatherVote(factionVoteArray) {
         var vote;
         var godfatherId = this.state.players.findIndex((x)=> x.role instanceof Roles.Godfather);
-        if(godfatherId != -1 && !this.state.players[godfatherId].alive)
+        if(godfatherId != -1 && this.state.players[godfatherId].alive)
         {
             vote = factionVoteArray.find((x) => x.by.indexOf(godfatherId) != -1);
-        } else return null;
+        } else return -1;
+        if(vote === undefined) return -1;
         return vote.id;
     }
 
@@ -522,7 +539,7 @@ class Game {
                     if(this.state.stage == "night-discussion" && this.state.players[fromPlayer].role instanceof Roles.MafiaRole && 
                     this.state.players[toPlayer].role instanceof Roles.MafiaRole) return; // can't vote for own mafs during the night 
                     voteArray = this.state.Votes_Mafia;     // TODO: If mafioso dies, godfather can't vote!
-                    server.Broadcast(this.state.players[fromPlayer].name + " suggests to kill " + this.state.players[toPlayer].name); // TODO: Say to Maf only
+                    server.Broadcast(this.state.players[fromPlayer].name + " suggests to kill " + this.state.players[toPlayer].name + "."); // TODO: Say to Maf only
                     break;
                 default:
                     console.log("Invalid faction.");
@@ -597,7 +614,9 @@ class Game {
         vigis.forEach((v) => {
             if (v.selectedVisit != -1 && !v.roleBlocked) {
                 v.visited = v.selectedVisit;
-                if (this.state.players[v.visited].role.nightImmune || this.state.players[v.visited].nightImmune)
+                const visitedPlayer = this.state.players[v.visited];
+                visitedPlayer.visitedBy.push(v);
+                if (visitedPlayer.role.nightImmune || visitedPlayer.nightImmune)
                     server.SayOnlyToPlayer(this.state.players.indexOf(v), "Your target survived your attack! Tonight, he has immunity to conventional attacks.");
                 else this.ProcessKill(v.visited, "vigi", "");
             }
@@ -606,12 +625,12 @@ class Game {
         var playerToKill;
         var godfatherPlr = this.state.players.find((x) => x.role instanceof Roles.Godfather);
         if (godfatherPlr === undefined) { // maybe bug here with ===
+            playerToKill = this.GetMostVotes(this.state.Votes_Mafia);
+        } else {
             playerToKill = this.GetGodfatherVote(this.state.Votes_Mafia);
             if (playerToKill == null) playerToKill = this.GetMostVotes(this.state.Votes_Mafia);
-        } else {
-            playerToKill = this.GetMostVotes(this.state.Votes_Mafia);
         }
-        if (playerToKill != -1) {
+        if (playerToKill != -1 && playerToKill != null) {
             var mafiosi = this.state.players.filter((x) => x.role instanceof Roles.Mafioso);
             var randMafioso;
             var mafRandIdx;
@@ -624,10 +643,12 @@ class Game {
             if (randMafioso !== undefined) {
                 if (!randMafioso.roleBlocked) {
                     randMafioso.visited = playerToKill;
+                    const visitedPlayer = this.state.players[playerToKill];
+                    visitedPlayer.visitedBy.push(randMafioso);
                     server.SayOnlyToMultiplePlayers(this.GetPlayerIndicesFromFaction(Roles.Faction.Mafia),
-                        randMafioso.name + " went to kill " + this.state.players[playerToKill].name + ".");
+                        randMafioso.name + " went to kill " + visitedPlayer.name + ".");
                     if (randMafioso.alive) { // see if mafioso was killed first
-                        if (this.state.players[playerToKill].nightImmune)
+                        if (visitedPlayer.nightImmune)
                             server.SayOnlyToPlayer(mafRandIdx, "Your target survived your attack! Tonight, he has immunity to conventional attacks.");
                         else this.ProcessKill(playerToKill, "maf", randMafioso.DeathNote); // TODO: Implement death note
                     }
@@ -701,18 +722,19 @@ class Game {
             if(p.selectedVisit == -1 || p.roleBlocked) continue;
             p.visited = p.selectedVisit; // TODO: here is where we swap if bd / witch
             const targetP = this.state.players[p.visited];
-            targetP.visitedBy.push(i);
+            targetP.visitedBy.push(p);
             // blackmail here
             if(targetP.silenced) server.SayOnlyToPlayer(p.visited, Strings.you_were_silenced);
         }
 
         for(let i = 0; i < this.state.players.length;i++){
             const fromPlr = this.state.players[i]; // from player
-            if(fromPlr.visited == -1 || fromPlayer.roleBlocked) continue;
+            if(fromPlr.visited == -1 || fromPlr.roleBlocked) continue;
             if(!fromPlr.alive) continue;
 
             const targetP = this.state.players[fromPlr.visited]; // to player
             if(fromPlr.role.category == Roles.Category.Investigative) { // INVESTIGATIVE ROLES  
+                console.log("Inspecting " + fromPlr.role.name_id + ".");
                 var msg = fromPlr.role.OnLateVisit(targetP, this.state.players, fromPlr);
                 if(Array.isArray(msg)) {
                     msg.forEach((m) => server.SayOnlyToPlayer(i, m));
@@ -741,6 +763,7 @@ class Game {
             if (p.role instanceof Roles.Escort /* || consort*/) {
                 p.visited = p.selectedVisit;
                 targetP = this.state.players[p.visited];
+                targetP.visitedBy.push(p);
                 targetP.roleBlocked = true;
                 server.SayOnlyToPlayer(p.visited, Strings.role_blocked); // TODO: If sk, kill roleblockers! Arso-> douse
             }
