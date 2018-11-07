@@ -78,7 +78,7 @@ io.on('connection', function(socket) {
         if (recon_passwords[num] !== undefined && recon_passwords[num] == p) {
             console.log("Player successfully relogged.");
             connections.splice(connections.indexOf(socket.id),1);
-            connections[num] = socket.id;
+            connections[num] = socket.id; // TODO: RECONNECT ROLE??
             socket.emit('msg', "<c-s val=5ABA1A>You have successfully relogged as player " + (num+1) + ".</c-s>");
         } else {
             socket.emit('msg', "<b>You are an spectator. You cannot speak or do any action.</b>");
@@ -88,6 +88,7 @@ io.on('connection', function(socket) {
 
     socket.emit("updatePlayers", GameInstance.GetSimplifiedPlayerList());
     socket.emit("recoverMessageLog", ServerInstance.MessageLog);
+    socket.emit("updateGraveyard", GameInstance.GetGraveyard());
     socket.emit("possibleroles", ServerInstance.setupRoles);
 });
 
@@ -185,6 +186,12 @@ var ServerClass = class {
 
     UpdatePlayerList(players) {
         io.sockets.emit("updatePlayers",players);
+    }
+
+    /** Sends graveyard info to players */
+    SendGraveyard(graveyard) {
+        console.log(graveyard);
+        io.sockets.emit("updateGraveyard",graveyard);
     }
 
     /** Returns the player index that corresponds to a name displayed on a message. */

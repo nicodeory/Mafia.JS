@@ -17,6 +17,9 @@ $(function () {
         "#464646",
         "#E55BB0"
     ];*/
+
+    $("#role-card-wrapper").css('visibility', 'hidden');
+
     var socket = io();
 
     $('form').submit(function () {
@@ -56,16 +59,17 @@ $(function () {
     });
 
     socket.on('roleinfo', function(role) {
+        $("#role-card-wrapper").css('visibility', 'visible');
         $("#role-title").html(role.name);
         $("#role-alignment").html("Alignment: " + role.faction);
         $("#role-abilities ul").empty();
         role.abilities.forEach((ab) => {
-            $("#role-abilities ul").append("<li>- "+ab+"</li>")
-        })
+            $("#role-abilities ul").append("<li>- "+ab+"</li>");
+        });
         $("#role-attributes ul").empty();
         role.attributes.forEach((ab) => {
-            $("#role-attributes ul").append("<li>- "+ab+"</li>")
-        })
+            $("#role-attributes ul").append("<li>- "+ab+"</li>");
+        });
         $("#role-goal").text("Goal: " + role.goal);
     });
 
@@ -73,6 +77,14 @@ $(function () {
         $("#messages").empty();
         log.forEach((m) => { LogMessage(m); });
     });
+    
+    socket.on('updateGraveyard', function(gr) {
+        $("#graveyard-list").empty();
+        gr.forEach((dp)=> {
+            $("#graveyard-list").append("<li><span>"+ (dp.id+1) + " - " + dp.name + " (" + dp.role + ") </span><ul><li>- "+dp.cause+"</li></ul></li>"); // TODO: DEATH DESCRIPTIONS
+        });
+    });
+
     socket.on('cl_setpassword', function (number) {
         var pass;
         pass = prompt("You are player " + (number + 1) + ". In order to get back into the game if connection is lost, specify a password.\n"+

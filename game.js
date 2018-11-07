@@ -113,6 +113,7 @@ class RolePlayer {
         this.role = role;
         this.alive = true;
         this.deathCause = "";
+        this.deathString = "";
         this.silenced = false;
         this.jailed = false;
         this.willBeExecuted = false;
@@ -252,6 +253,24 @@ class Game {
         }
         return plyList;
     }
+
+    /** Returns a simplified list of dead people. */
+    GetGraveyard() { // TODO: INCLUDE DEATH DESCRIPTIONS
+        var pList = [];
+        this.state.deadPeople.forEach((p) => {
+            if(p.name.length > 0 && p.name[0] == '(') p.name = p.name.slice(1,-2); // TODO: Make sure to prevent '()'-like names
+            const idx = this.state.players.indexOf(p);
+            const ply = {
+                id: idx,
+                name: p.name,
+                role: p.role.name,
+                cause: p.deathString
+            };
+            pList.push(ply);
+        });
+        return pList;
+    }
+
     /** Sends a player list to clients (with only name and alive) */
     SendPlayerUpdate() {
         server.UpdatePlayerList(this.GetSimplifiedPlayerList());
@@ -351,10 +370,10 @@ class Game {
                 throw "FATAL ERROR: INVALID STATE";
         }
     }
+
     /** Substracts one second from the time left. If timer reaches -1, game transitions to the next state. */
     TickSecond() {
         this.timeLeft--;
-        //console.log(this.timeLeft);
         if(this.timeLeft < 0) {
             this.ContinueGameFlow(this.nextState);
         }
@@ -362,9 +381,16 @@ class Game {
 
     /** Called when a player quits the game. */
     OnPlayerQuit(pIndex) {
-        this.state.soonDeadPeople.push(pIndex);
-        server.Broadcast(this.state.players[pIndex].name + " has quit on life.");
-        this.state.players[pIndex].name = "(" + this.state.players[pIndex].name + ")";
+        const p = this.state.players[pIndex];
+        if(p.alive) {
+            this.state.soonDeadPeople.push(pIndex);
+            server.Broadcast(p.name + " has quit on life.");
+            p.name = "(" + p.name + ")";
+            this.SendPlayerUpdate(); // () if quit and {} if afk?
+        } else {
+            server.Broadcast(p.name + "'s soul has departed.");
+        }
+        
     }
 
     /** Checks whether there is a player who already has majority to trial. */
@@ -510,7 +536,6 @@ class Game {
     
     /** Returns true if the vote is valid, within bounds and voted player is alive. */
     IsVoteValid(vote) {
-        console.log(vote);
         return vote.to >= 0 && vote.to < 15 && vote.from != vote.to && this.state.players[vote.to].alive;
     }
     /** Returns true if player can vote */
@@ -696,6 +721,7 @@ class Game {
     /** Notifies dead player if they were truly killed. */
     SendKillMessages() {
         this.state.recentlyDeadPeople.forEach((pl)=> {
+            console.log(pl.deathCause);
             switch (pl.deathCause) {
                 case "maf":
                     server.Broadcast("You hear shots ring through the streets..."); // TODO: noise only if immune, show text even with doc
@@ -871,9 +897,11 @@ class Game {
                     else deathString += " Afterwards, he was apparently attacked again...";
                 });
             }
+            p.deathString = deathString;
             server.Broadcast(deathString);
             server.Broadcast(p.name + "'s role was " + p.role.name);
             server.Broadcast(p.LastWill == "" ? p.name + " doesn't seem to have a last will." : p.name + "'s Last Will reads: " + p.LastWill); 
+            this.state.deadPeople.push(p);
             indicesAlreadyAnnounced.push(i);
         }
         this.state.recentlyDeadPeople = [];
@@ -883,6 +911,7 @@ class Game {
             if(!this.state.players[idx].alive) this.state.soonDeadPeople.splice(i,1);
         }
         server.Broadcast("---");
+        server.SendGraveyard(this.GetGraveyard()); // TODO: Reveal progressively.
         this.CheckForWinCondition();
     }
 

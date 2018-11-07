@@ -100,6 +100,49 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
     grid-column-end: 2;
 }
 
+#graveyard-wrapper {
+    position: absolute;
+    opacity:0;
+    background-color: #003300d0;
+    height: 310px;
+    width: 280px;
+    padding: 2%;
+    padding-right: 2px;
+    transition: opacity 0.2s;
+    color: #ffffff;
+    border: solid #000;
+    border-width: 1px;
+    border-radius: 2px;
+}
+
+#graveyard-list {
+    font-size: 13px;
+}
+
+#graveyard-btn {
+    position: absolute;
+    top:0;
+    left:280px;
+    width: 50px;
+    height: 50px;
+    background-color: #003300d0;
+    transition: background-color,opacity 0.2s;
+    cursor: pointer;
+}
+#graveyard-btn:hover {
+    background-color: #003300ee;
+    opacity: 0.2;
+}
+#graveyard-btn:hover + #graveyard-wrapper {
+    opacity: 1;
+}
+.graveyard-img {
+    padding: 15%;
+    width: 100%;
+}
+
+
+
 .role-icon-container {
     position: absolute;
     top: 0;
@@ -144,7 +187,7 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
     text-shadow: 1px 1px #00000055;
 }
 
-.role-card-wrapper {
+#role-card-wrapper {
     display:flex;
     flex-direction: row;
     justify-content: flex-end;
