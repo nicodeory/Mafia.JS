@@ -43,6 +43,7 @@ Roles.Citizen = class extends Roles.TownRole {
         this.name_id = "citizen";
         this.category = Roles.Category.Government;
         this.nightAction = Roles.NightAction.OnlySelfVisit;
+        this.canSelfVisit = true;
         this.vestsLeft = 1;
     }
 };
@@ -218,7 +219,7 @@ Roles.OrderedRoleNames = ["judge","auditor","witchdoctor","massmurderer","amnesi
                        "beguiler","agent","kidnapper","disguiser","blackmailer","janitor","framer","consigliere","consort","godfather","mafioso",
                        "deceiver","vanguard","informant","interrogator","silencer","incensemaster","forger","administrator","liaison","dragonhead","enforcer",
                        "crier","marshall","veteran","lookout","detective","jailor","mayor","bodyguard",
-                       "coroner","busdriver","spy","vigilante","escort","investigator","doctor","sheriff","citizen"]
+                       "coroner","busdriver","spy","vigilante","escort","investigator","doctor","sheriff","citizen"];
 
 //
 Roles.RoleFactory = {

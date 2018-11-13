@@ -264,7 +264,7 @@ http.listen(3000, function() {
 });
 
 var GAMEPLAYERS = 0;
-function StartGame() {
+function StartGame() { // TODO: Randomize player indices
     var res=GameInstance.setup.CheckValidity(connections.length);
     if(res != true){
         ServerInstance.Broadcast(res);

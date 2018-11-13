@@ -619,14 +619,17 @@ class Game {
         }        
     }
 
-    /** */
-
     /** All applicable people become immune for the night */
-    UseVests() { // TODO: Assign vests
+    UseVests() { // TODO: Assign vests 
         this.state.players.filter((x) => x.role instanceof Roles.Citizen).forEach(player => {
-            if(player.selectedTarget != -1) { // TODO: Notify player
-                player.role.vestsLeft--;
-                player.nightImmune = true;
+            if(player.selectedVisit != -1) {
+                console.log(player.selectedVisit);
+                if(player.role.vestsLeft <= 0) {console.log("No more vests left!"); } else { // TODO: UNFINISHED
+                    player.role.vestsLeft--;
+                    if(player.role.vestsLeft == 0) server.SayOnlyToPlayer(this.state.players.indexOf(player), "You have no more bulletproof vests.");
+                    else server.SayOnlyToPlayer(this.state.players.indexOf(player), "You have " + player.role.vestsLeft + " bulletproof vests left.");
+                    player.nightImmune = true;
+                }
             } // check if player has enough vests
         });
     }
@@ -673,8 +676,10 @@ class Game {
                     server.SayOnlyToMultiplePlayers(this.GetPlayerIndicesFromFaction(Roles.Faction.Mafia),
                         randMafioso.name + " went to kill " + visitedPlayer.name + ".");
                     if (randMafioso.alive) { // see if mafioso was killed first
-                        if (visitedPlayer.nightImmune)
+                        if (visitedPlayer.nightImmune) {
+                            console.log("Saying target immune to player " + mafRandIdx);
                             server.SayOnlyToPlayer(mafRandIdx, "Your target survived your attack! Tonight, he has immunity to conventional attacks.");
+                        }
                         else this.ProcessKill(playerToKill, "maf", randMafioso.DeathNote); // TODO: Implement death note
                     }
                 } else {console.log("The mafioso is roleblocked and is unable to kill tonight!");}
@@ -722,18 +727,19 @@ class Game {
     SendKillMessages() {
         this.state.recentlyDeadPeople.forEach((pl)=> {
             console.log(pl.deathCause);
+            var pId = this.state.players.indexOf(pl);
             switch (pl.deathCause) {
                 case "maf":
                     server.Broadcast("You hear shots ring through the streets..."); // TODO: noise only if immune, show text even with doc
-                    server.SayOnlyToPlayer(pl, "You were hit by the Mafia.");
+                    server.SayOnlyToPlayer(pId, "You were hit by the Mafia.");
                     break;
                 case "vigi":
                     server.Broadcast("You hear a tight grouping of shots echoing through the town...");
-                    server.SayOnlyToPlayer(pl, "You were taken out by a Vigilante.");
+                    server.SayOnlyToPlayer(pId, "You were taken out by a Vigilante.");
                     break;
                 case "suicide-afk":
                     server.Broadcast("You hear a single shot ring out in the night...");
-                    server.SayOnlyToPlayer(pl, "You have committed suicide. Don't be AFK during a game!");
+                    server.SayOnlyToPlayer(pId, "You have committed suicide. Don't be AFK during a game!");
                     break;
                 default:
                     console.log("unknown kill cause");
